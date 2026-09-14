@@ -36,6 +36,7 @@ class ResultsScreen extends StatelessWidget {
     final numCorrectQuestions = summaryData.where((data) {
       return data['user_answer'] == data['correct_answer'];
     }).length;
+    final scorePercent = numTotalQuestions == 0 ? 0 : ((numCorrectQuestions / numTotalQuestions) * 100).round();
 
     return SizedBox(
       width: double.infinity,
@@ -45,7 +46,7 @@ class ResultsScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              Text( 
                 'You answered $numCorrectQuestions out of $numTotalQuestions questions correctly!',
                 style: const TextStyle(
                   color: Colors.white,
@@ -54,21 +55,30 @@ class ResultsScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
-              QuestionsSummary(summaryData),
-              const SizedBox(height: 30),
-              TextButton.icon(
-                onPressed: onRestart,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restart Quiz!'),
+              const SizedBox(height: 8),  
+              Text(
+                '$scorePercent%',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height:30),
+            QuestionsSummary(summaryData),
+            const SizedBox(height:30),
+            TextButton.icon(
+              onPressed: onRestart,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Restart Quiz!'),
+            ),
+          ], //
         ),
       ),
-    );
-  }
+    )
+  );
+}  
 }
