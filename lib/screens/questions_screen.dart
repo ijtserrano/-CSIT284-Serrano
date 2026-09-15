@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:quiz_app/data/questions.dart';
+import 'package:quiz_app/models/quiz_question.dart';
 
 class QuestionsScreen extends StatefulWidget {
   const QuestionsScreen({
     super.key,
+    required this.questions,
     required this.onSelectAnswer,
   });
 
+  final List<QuizQuestion> questions;
   final void Function(String answer) onSelectAnswer;
 
   @override
@@ -23,7 +25,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   String? selectedAnswer;
   List<String> currentShuffledAnswers = [];
-  
+
   // Track status of each question ('answered' or 'timeout')
   final List<String> questionStatuses = [];
 
@@ -36,7 +38,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   void _loadQuestionAnswers() {
     currentShuffledAnswers =
-        questions[currentQuestionIndex].getShuffledAnswers();
+        widget.questions[currentQuestionIndex].getShuffledAnswers();
   }
 
   void startTimer() {
@@ -47,7 +49,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
           secondsRemaining--;
         });
       } else {
-        // Time expired! Record as timeout ("Missed") and advance
         handleTimeout();
       }
     });
@@ -78,7 +79,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   void goToNextQuestion() {
     timer?.cancel();
 
-    // Answered before time ran out
     questionStatuses.add('answered');
     widget.onSelectAnswer(selectedAnswer ?? 'TIMEOUT');
 
@@ -86,7 +86,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _advanceOrFinish() {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < widget.questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
         resetTimer();
@@ -107,11 +107,11 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentQuestion = questions[currentQuestionIndex];
+    final currentQuestion = widget.questions[currentQuestionIndex];
     final bool hasSelectedAnswer = selectedAnswer != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF5B118C),
+      backgroundColor: Colors.transparent, // Uses gradient background from quiz.dart
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -126,19 +126,20 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
-                      ...List.generate(questions.length, (index) {
+                      ...List.generate(widget.questions.length, (index) {
                         final isCompleted = index < currentQuestionIndex;
                         final isCurrent = index == currentQuestionIndex;
-                        final status = isCompleted ? questionStatuses[index] : 'pending';
+                        final status =
+                            isCompleted ? questionStatuses[index] : 'pending';
 
-                        // Dynamic background color based on completion state
-                        Color badgeColor = Colors.white.withValues(alpha: 0.15);
+                        // Dynamic colors using emerald/forest palette
+                        Color badgeColor = Colors.white.withOpacity(0.15);
                         if (isCompleted) {
                           badgeColor = status == 'answered'
-                              ? Colors.greenAccent
-                              : Colors.redAccent; // Red background for Missed / Timeout
+                              ? const Color(0xFF52B788) // Sage Green
+                              : const Color(0xFFD8F3DC); // Pale Green / Missed
                         } else if (isCurrent) {
-                          badgeColor = const Color(0xFF7B1FA2);
+                          badgeColor = const Color(0xFF40916C); // Emerald Green
                         }
 
                         return Column(
@@ -163,12 +164,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                     ? Text(
                                         status == 'answered'
                                             ? 'Answered'
-                                            : 'Missed', // Displays "Missed" for timeouts
+                                            : 'Missed',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: status == 'answered'
                                               ? Colors.black
-                                              : Colors.white,
+                                              : const Color(0xFF1B4332),
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -187,15 +188,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                               ),
                             ),
                             // Connecting Line
-                            if (index < questions.length - 1)
+                            if (index < widget.questions.length - 1)
                               Container(
                                 width: 2,
                                 height: 20,
                                 color: isCompleted
                                     ? (status == 'answered'
-                                        ? Colors.greenAccent
-                                        : Colors.redAccent)
-                                    : Colors.white.withValues(alpha: 0.2),
+                                        ? const Color(0xFF52B788)
+                                        : const Color(0xFFD8F3DC))
+                                    : Colors.white.withOpacity(0.2),
                               ),
                           ],
                         );
@@ -205,19 +206,19 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 ),
               ),
 
-              // --- RIGHT SIDE: Timer, Question & Fixed Answer List ---
+              // --- RIGHT SIDE: Timer, Question & Answer List ---
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top Timer
+                    // Timer
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         formattedTime,
                         style: TextStyle(
                           color: secondsRemaining <= 5
-                              ? Colors.redAccent
+                              ? const Color(0xFFFFB703) // Warm amber warning
                               : Colors.white70,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -226,16 +227,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Question Card Box
+                    // Question Box
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
                           vertical: 20, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: Colors.white.withOpacity(0.3),
                           width: 1,
                         ),
                       ),
@@ -251,7 +252,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Fixed Answer List
+                    // Choice Buttons List
                     Expanded(
                       child: ListView(
                         children: currentShuffledAnswers.map((answer) {
@@ -267,14 +268,14 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                     vertical: 14, horizontal: 16),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? const Color(0xFF7B1FA2)
-                                      : const Color(0xFF4A0E74),
+                                      ? const Color(0xFF40916C) // Selected emerald
+                                      : const Color(0xFF1D4E3E), // Deep forest green
                                   borderRadius: BorderRadius.circular(30),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.white
-                                        : Colors.transparent,
-                                    width: 1.5,
+                                        : Colors.white.withOpacity(0.3),
+                                    width: isSelected ? 1.5 : 1.0,
                                   ),
                                 ),
                                 child: Row(
@@ -306,24 +307,25 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       ),
                     ),
 
-                    // Faded/Disabled Next Question Button
+                    // Next Question Button
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: ElevatedButton(
                         onPressed: hasSelectedAnswer ? goToNextQuestion : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          disabledBackgroundColor: Colors.white.withValues(alpha: 0.3),
-                          foregroundColor: const Color(0xFF5B118C),
+                          disabledBackgroundColor:
+                              Colors.white.withOpacity(0.3),
+                          foregroundColor: const Color(0xFF1B4332), // Forest Green text
                           disabledForegroundColor:
-                              const Color(0xFF5B118C).withValues(alpha: 0.4),
+                              const Color(0xFF1B4332).withOpacity(0.4),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                         child: Text(
-                          currentQuestionIndex == questions.length - 1
+                          currentQuestionIndex == widget.questions.length - 1
                               ? 'Finish Quiz'
                               : 'Next Question',
                           style: const TextStyle(

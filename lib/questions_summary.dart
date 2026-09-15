@@ -8,36 +8,46 @@ class QuestionsSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 300,
+      height: 400,
       child: SingleChildScrollView(
         child: Column(
           children: summaryData.map((data) {
-            final isCorrect = data['user_answer'] == data['correct_answer'];
+            // Check if the user answered or missed/timed out
+            final userAnswer = data['user_answer'] as String;
+            final isMissed = userAnswer == 'TIMEOUT' || userAnswer.isEmpty;
 
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
+            // Colors matching the progress sidebar badges
+            final circleColor = isMissed 
+                ? const Color(0xFFD8F3DC) // Light Green for Missed
+                : const Color(0xFF4EAB81); // Dark Green for Answered
+
+            final textColor = isMissed 
+                ? const Color(0xFF1B4332) // Dark forest green text on light background
+                : Colors.white; // White text on dark green background
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Dynamic Colored Number Circle
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: 32,
+                    height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isCorrect
-                          ? const Color.fromARGB(255, 150, 198, 241)
-                          : const Color.fromARGB(255, 249, 133, 241),
-                      borderRadius: BorderRadius.circular(100),
+                      color: circleColor,
+                      shape: BoxShape.circle,
                     ),
                     child: Text(
                       ((data['question_index'] as int) + 1).toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 22, 2, 56),
+                        color: textColor,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,15 +62,19 @@ class QuestionsSummary extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          data['user_answer'] as String,
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 202, 171, 252),
+                          isMissed ? 'Missed (Timeout)' : userAnswer,
+                          style: TextStyle(
+                            color: isMissed 
+                                ? Colors.redAccent.shade100 
+                                : Colors.white70,
+                            fontWeight: isMissed ? FontWeight.w500 : FontWeight.normal,
                           ),
                         ),
                         Text(
                           data['correct_answer'] as String,
                           style: const TextStyle(
-                            color: Color.fromARGB(255, 181, 254, 246),
+                            color: Color(0xFF52B788),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],

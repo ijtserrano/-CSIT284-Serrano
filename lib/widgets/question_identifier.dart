@@ -12,13 +12,31 @@ class QuestionIdentifier extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 15,
-      backgroundColor:
-          isCorrectAnswer ? Colors.green : const Color.fromARGB(255, 214, 0, 91),
+    final questionNumber = questionIndex + 1;
+
+    // Dark Green for answered/correct, Light Green for missed/incorrect
+    final circleColor = isCorrectAnswer
+        ? const Color(0xFF4EAB81) // Dark Green
+        : const Color(0xFFD8F3DC); // Light Green
+
+    final textColor = isCorrectAnswer
+        ? Colors.white
+        : const Color(0xFF1B4332); // Dark Forest Green Text
+
+    return Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: circleColor,
+        shape: BoxShape.circle,
+      ),
       child: Text(
-        (questionIndex + 1).toString(),
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        questionNumber.toString(),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
       ),
     );
   }
