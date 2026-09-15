@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:quiz_app/data/questions.dart';
 import 'package:quiz_app/models/quiz_question.dart';
 import 'package:quiz_app/screens/questions_screen.dart';
@@ -16,16 +15,12 @@ class Quiz extends StatefulWidget {
 class _QuizState extends State<Quiz> {
   List<String> selectedAnswers = [];
   var activeScreen = 'start-screen';
-  List<QuizQuestion> shuffledQuestions = [];
-
-  @override
-  void initState() {
-    super.initState();
-    shuffledQuestions = List.of(questions)..shuffle();
-  }
+  List<QuizQuestion> shuffledQuestions = List.of(questions);
 
   void switchScreen() {
     setState(() {
+      shuffledQuestions = List.of(questions);
+      shuffledQuestions.shuffle();
       activeScreen = 'questions-screen';
     });
   }
@@ -33,7 +28,7 @@ class _QuizState extends State<Quiz> {
   void chooseAnswer(String answer) {
     selectedAnswers.add(answer);
 
-    if (selectedAnswers.length == questions.length) {
+    if (selectedAnswers.length == shuffledQuestions.length) {
       setState(() {
         activeScreen = 'results-screen';
       });
@@ -43,17 +38,22 @@ class _QuizState extends State<Quiz> {
   void restartQuiz() {
     setState(() {
       selectedAnswers = [];
-      shuffledQuestions = List.of(questions)..shuffle();
+      shuffledQuestions = List.of(questions);
+      shuffledQuestions.shuffle();
       activeScreen = 'start-screen';
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget screenWidget = StartScreen(switchScreen);
+    Widget screenWidget = StartScreen(
+      switchScreen,
+      key: const ValueKey('start-screen'),
+    );
 
     if (activeScreen == 'questions-screen') {
       screenWidget = QuestionsScreen(
+        key: const ValueKey('questions-screen'),
         questions: shuffledQuestions,
         onSelectAnswer: chooseAnswer,
       );
@@ -61,6 +61,7 @@ class _QuizState extends State<Quiz> {
 
     if (activeScreen == 'results-screen') {
       screenWidget = ResultsScreen(
+        key: const ValueKey('results-screen'),
         questions: shuffledQuestions,
         chosenAnswers: selectedAnswers,
         onRestart: restartQuiz,
@@ -75,14 +76,23 @@ class _QuizState extends State<Quiz> {
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color.fromARGB(255, 27, 67, 50),
-                Color.fromARGB(255, 45, 106, 79),
+                Color(0xFF1B4332),
+                Color(0xFF2D6A4F),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
-          child: screenWidget,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            child: screenWidget,
+          ),
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
 import 'package:quiz_app/models/quiz_question.dart';
 
 class QuestionsScreen extends StatefulWidget {
@@ -69,19 +68,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   void handleTimeout() {
     timer?.cancel();
-
     questionStatuses.add('timeout');
     widget.onSelectAnswer('TIMEOUT');
-
     _advanceOrFinish();
   }
 
   void goToNextQuestion() {
     timer?.cancel();
-
     questionStatuses.add('answered');
     widget.onSelectAnswer(selectedAnswer ?? 'TIMEOUT');
-
     _advanceOrFinish();
   }
 
@@ -111,10 +106,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     final bool hasSelectedAnswer = selectedAnswer != null;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Uses gradient background from quiz.dart
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -132,19 +127,17 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                         final status =
                             isCompleted ? questionStatuses[index] : 'pending';
 
-                        // Dynamic colors using emerald/forest palette
-                        Color badgeColor = Colors.white.withOpacity(0.15);
+                        Color badgeColor = Colors.white.withValues(alpha: 0.15);
                         if (isCompleted) {
                           badgeColor = status == 'answered'
-                              ? const Color(0xFF52B788) // Sage Green
-                              : const Color(0xFFD8F3DC); // Pale Green / Missed
+                              ? const Color(0xFF4EAB81) // Dark Green
+                              : const Color(0xFFD8F3DC); // Light Green
                         } else if (isCurrent) {
-                          badgeColor = const Color(0xFF40916C); // Emerald Green
+                          badgeColor = const Color(0xFF40916C);
                         }
 
                         return Column(
                           children: [
-                            // Question Step Badge
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               padding: const EdgeInsets.symmetric(
@@ -168,7 +161,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: status == 'answered'
-                                              ? Colors.black
+                                              ? Colors.white
                                               : const Color(0xFF1B4332),
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
@@ -187,16 +180,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                       ),
                               ),
                             ),
-                            // Connecting Line
                             if (index < widget.questions.length - 1)
                               Container(
                                 width: 2,
                                 height: 20,
                                 color: isCompleted
                                     ? (status == 'answered'
-                                        ? const Color(0xFF52B788)
+                                        ? const Color(0xFF4EAB81)
                                         : const Color(0xFFD8F3DC))
-                                    : Colors.white.withOpacity(0.2),
+                                    : Colors.white.withValues(alpha: 0.2),
                               ),
                           ],
                         );
@@ -206,19 +198,18 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 ),
               ),
 
-              // --- RIGHT SIDE: Timer, Question & Answer List ---
+              // --- RIGHT SIDE: Fade Animated Question & Answer Area ---
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Timer
+                    // Top Timer (Static)
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         formattedTime,
                         style: TextStyle(
                           color: secondsRemaining <= 5
-                              ? const Color(0xFFFFB703) // Warm amber warning
+                              ? const Color(0xFFFFB703) // Amber-Orange Warning
                               : Colors.white70,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -227,110 +218,131 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Question Box
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        currentQuestion.text,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Choice Buttons List
+                    // Fade Transition Box for Question Content
                     Expanded(
-                      child: ListView(
-                        children: currentShuffledAnswers.map((answer) {
-                          final isSelected = selectedAnswer == answer;
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: InkWell(
-                              onTap: () => chooseAnswer(answer),
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 14, horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF40916C) // Selected emerald
-                                      : const Color(0xFF1D4E3E), // Deep forest green
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.3),
-                                    width: isSelected ? 1.5 : 1.0,
-                                  ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        child: Column(
+                          key: ValueKey<int>(currentQuestionIndex),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Question Text Box
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 20, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1,
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isSelected
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        answer,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                              child: Text(
+                                currentQuestion.text,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                          );
-                        }).toList(),
+                            const SizedBox(height: 20),
+
+                            // Choice Buttons List
+                            Expanded(
+                              child: ListView(
+                                children: currentShuffledAnswers.map((answer) {
+                                  final isSelected = selectedAnswer == answer;
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    child: InkWell(
+                                      onTap: () => chooseAnswer(answer),
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 14, horizontal: 16),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFF40916C)
+                                              : const Color(0xFF1D4E3E),
+                                          borderRadius: BorderRadius.circular(30),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Colors.white.withValues(alpha: 0.3),
+                                            width: isSelected ? 1.5 : 1.0,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              isSelected
+                                                  ? Icons.radio_button_checked
+                                                  : Icons.radio_button_off,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                answer,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
-                    // Next Question Button
+                    // Next / Finish Button
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: hasSelectedAnswer ? goToNextQuestion : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              Colors.white.withOpacity(0.3),
-                          foregroundColor: const Color(0xFF1B4332), // Forest Green text
-                          disabledForegroundColor:
-                              const Color(0xFF1B4332).withOpacity(0.4),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: hasSelectedAnswer ? goToNextQuestion : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            disabledBackgroundColor:
+                                Colors.white.withValues(alpha: 0.3),
+                            foregroundColor: const Color(0xFF1B4332),
+                            disabledForegroundColor:
+                                const Color(0xFF1B4332).withValues(alpha: 0.4),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          currentQuestionIndex == widget.questions.length - 1
-                              ? 'Finish Quiz'
-                              : 'Next Question',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            currentQuestionIndex == widget.questions.length - 1
+                                ? 'Finish Quiz'
+                                : 'Next Question',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
