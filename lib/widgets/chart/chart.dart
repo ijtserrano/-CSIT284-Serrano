@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../../models/expense.dart';
 import '../../theme/app_theme.dart';
 import 'chart_bar.dart';
 
 class Chart extends StatelessWidget {
-  const Chart({super.key, required this.expenses});
+  const Chart({super.key, required this.expenses, this.title = 'Total spent'});
 
   final List<Expense> expenses;
+  final String title;
 
   List<ExpenseBucket> get buckets => [
         for (final c in Category.values) ExpenseBucket.forCategory(expenses, c),
@@ -37,7 +39,7 @@ class Chart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Total spent', style: Theme.of(context).textTheme.labelLarge),
+          Text(title, style: Theme.of(context).textTheme.labelLarge),
           TweenAnimationBuilder<double>(
             tween: Tween(end: total),
             duration: const Duration(milliseconds: 600),

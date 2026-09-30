@@ -10,8 +10,11 @@ class AppColors {
 
   static const categoryColors = {
     Category.food: Color(0xFFF97316),
+    Category.groceries: Color(0xFF22C55E),
     Category.travel: Color(0xFF0EA5E9),
     Category.leisure: Color(0xFFEC4899),
+    Category.bills: Color(0xFFEAB308),
+    Category.health: Color(0xFFEF4444),
     Category.work: Color(0xFF8B5CF6),
   };
 }

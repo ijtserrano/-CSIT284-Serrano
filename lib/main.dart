@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'widgets/expenses.dart';
+import 'widgets/expenses_screen.dart'; // Updated import
 
 void main() => runApp(const ExpenseApp());
 
@@ -17,7 +17,7 @@ class ExpenseApp extends StatelessWidget {
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: mode,
-        home: const Expenses(),
+        home: const ExpensesScreen(), // Updated to match expenses_screen.dart
       ),
     );
   }
