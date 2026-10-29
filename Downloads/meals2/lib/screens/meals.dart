@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:meals2/models/meal.dart';
 import 'package:meals2/screens/meal_details.dart';
 import 'package:meals2/widgets/meal_item.dart';
@@ -8,58 +9,65 @@ class MealsScreen extends StatelessWidget {
     super.key,
     this.title,
     required this.meals,
-    this.emptyHint = 'Try selecting a different category.',
+    this.emptyHint,
   });
 
-  /// When null, no AppBar is shown (used inside the tab layout).
   final String? title;
   final List<Meal> meals;
-  final String emptyHint;
+  final String? emptyHint;
+
+  void selectMeal(BuildContext context, Meal meal) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => MealDetailsScreen(meal: meal),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Widget content = ListView.builder(
-      itemCount: meals.length,
-      itemBuilder: (ctx, index) => MealItem(
-        meal: meals[index],
-        onSelectMeal: (meal) => openMealDetails(context, meal),
+    Widget content = Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Uh oh ... nothing here!',
+            style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            emptyHint ?? 'Try selecting a different category!',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
+        ],
       ),
     );
 
-    if (meals.isEmpty) {
-      content = Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Uh oh ... nothing here!',
-                style: theme.textTheme.headlineLarge!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                emptyHint,
-                style: theme.textTheme.bodyLarge!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+    if (meals.isNotEmpty) {
+      content = ListView.builder(
+        itemCount: meals.length,
+        itemBuilder: (ctx, index) => MealItem(
+          meal: meals[index],
+          onSelectMeal: (meal) {
+            selectMeal(context, meal);
+          },
         ),
       );
     }
 
-    if (title == null) return content;
+    if (title == null) {
+      return content;
+    }
 
     return Scaffold(
-      appBar: AppBar(title: Text(title!)),
+      appBar: AppBar(
+        title: Text(title!),
+      ),
       body: content,
     );
   }

@@ -1,149 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:meals2/models/meal.dart';
-import 'package:meals2/providers/favorites_store.dart';
+import 'package:meals2/providers/favorite_meals_provider.dart';
 
-/// Opens the details screen for [meal].
-void openMealDetails(BuildContext context, Meal meal) {
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (ctx) => MealDetailsScreen(meal: meal)),
-  );
-}
-
-class MealDetailsScreen extends StatelessWidget {
+class MealDetailsScreen extends ConsumerWidget {
   const MealDetailsScreen({super.key, required this.meal});
 
   final Meal meal;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Widget heading(String text) => Padding(
-          padding: const EdgeInsets.only(top: 24, bottom: 8),
-          child: Text(
-            text,
-            style: theme.textTheme.titleLarge!.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoriteMeals = ref.watch(favoriteMealsProvider);
+    final isFavorite = favoriteMeals.any((m) => m.id == meal.id);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(meal.title),
         actions: [
-          ListenableBuilder(
-            listenable: favoritesStore,
-            builder: (context, _) {
-              final isFav = favoritesStore.isFavorite(meal);
-              return IconButton(
-                tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) => RotationTransition(
-                    turns: Tween<double>(begin: 0.8, end: 1).animate(animation),
-                    child: child,
-                  ),
-                  child: Icon(
-                    isFav ? Icons.star : Icons.star_border,
-                    key: ValueKey(isFav),
+          IconButton(
+            onPressed: () {
+              final wasAdded = ref
+                  .read(favoriteMealsProvider.notifier)
+                  .toggleMealFavoriteStatus(meal);
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    wasAdded
+                        ? 'Marked as a favorite!'
+                        : 'Meal is no longer a favorite.',
                   ),
                 ),
-                onPressed: () {
-                  final added = favoritesStore.toggle(meal);
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(added
-                          ? 'Added to favorites.'
-                          : 'Removed from favorites.'),
-                    ),
-                  );
-                },
               );
             },
+            icon: Icon(isFavorite ? Icons.star : Icons.star_border),
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Hero(
-              tag: meal.id,
-              child: Image.network(
-                meal.imageUrl,
-                height: 300,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+            Image.network(
+              meal.imageUrl,
+              height: 300,
+              width: double.infinity,
+              fit: BoxFit.cover,
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Chip(
-                        avatar: const Icon(Icons.schedule, size: 18),
-                        label: Text('${meal.duration} min'),
-                      ),
-                      Chip(
-                        avatar: const Icon(Icons.work, size: 18),
-                        label: Text(meal.complexityText),
-                      ),
-                      Chip(
-                        avatar: const Icon(Icons.attach_money, size: 18),
-                        label: Text(meal.affordabilityText),
-                      ),
-                      if (meal.isGlutenFree) const Chip(label: Text('Gluten-free')),
-                      if (meal.isLactoseFree) const Chip(label: Text('Lactose-free')),
-                      if (meal.isVegetarian) const Chip(label: Text('Vegetarian')),
-                      if (meal.isVegan) const Chip(label: Text('Vegan')),
-                    ],
+            const SizedBox(height: 14),
+            Text(
+              'Ingredients',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
                   ),
-                  heading('Ingredients'),
-                  for (final ingredient in meal.ingredients)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text(
-                        '• $ingredient',
-                        style: theme.textTheme.bodyMedium!.copyWith(
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  heading('Steps'),
-                  for (var i = 0; i < meal.steps.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            child: Text('${i + 1}',
-                                style: const TextStyle(fontSize: 12)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              meal.steps[i],
-                              style: theme.textTheme.bodyMedium!.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
             ),
+            const SizedBox(height: 14),
+            for (final ingredient in meal.ingredients)
+              Text(
+                ingredient,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+            const SizedBox(height: 24),
+            Text(
+              'Steps',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            for (final step in meal.steps)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Text(
+                  step,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                ),
+              ),
           ],
         ),
       ),

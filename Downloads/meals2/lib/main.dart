@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:meals2/screens/tabs.dart';
 
-/// Lets the Settings screen switch between light, dark and system theme.
-final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.dark);
+// If you had your own colors/fonts before, put them back in these two themes.
+final theme = ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    brightness: Brightness.light,
+    seedColor: const Color.fromARGB(255, 131, 57, 0),
+  ),
+  textTheme: GoogleFonts.latoTextTheme(),
+);
 
-ThemeData buildTheme(Brightness brightness) {
-  final base = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      brightness: brightness,
-      seedColor: const Color.fromARGB(255, 131, 57, 0),
-    ),
-  );
-  return base.copyWith(textTheme: GoogleFonts.latoTextTheme(base.textTheme));
-}
+final darkTheme = ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    brightness: Brightness.dark,
+    seedColor: const Color.fromARGB(255, 131, 57, 0),
+  ),
+  textTheme: GoogleFonts.latoTextTheme(
+    ThemeData(brightness: Brightness.dark).textTheme,
+  ),
+);
+
+// Used by settings.dart to switch between light / dark / system.
+final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.system);
 
 void main() {
-  runApp(const App());
+  runApp(const ProviderScope(child: App()));
 }
 
 class App extends StatelessWidget {
@@ -29,8 +40,8 @@ class App extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) => MaterialApp(
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
+        theme: theme,
+        darkTheme: darkTheme,
         themeMode: mode,
         home: const TabsScreen(),
       ),
