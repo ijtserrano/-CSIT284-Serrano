@@ -1,37 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum Filter { glutenFree, lactoseFree, vegetarian, vegan }
+import 'package:meals2/providers/filters_provider.dart';
 
-const kInitialFilters = {
-  Filter.glutenFree: false,
-  Filter.lactoseFree: false,
-  Filter.vegetarian: false,
-  Filter.vegan: false,
-};
+class FiltersScreen extends ConsumerWidget {
+  const FiltersScreen({super.key});
 
-class FiltersScreen extends StatefulWidget {
-  const FiltersScreen({super.key, required this.currentFilters});
-
-  final Map<Filter, bool> currentFilters;
-
-  @override
-  State<FiltersScreen> createState() => _FiltersScreenState();
-}
-
-class _FiltersScreenState extends State<FiltersScreen> {
-  late Map<Filter, bool> _filters;
-
-  @override
-  void initState() {
-    super.initState();
-    _filters = {...widget.currentFilters};
-  }
-
-  Widget _switch(Filter filter, String title, String subtitle) {
+  Widget _switch(
+    BuildContext context,
+    WidgetRef ref,
+    Map<Filter, bool> activeFilters,
+    Filter filter,
+    String title,
+    String subtitle,
+  ) {
     final theme = Theme.of(context);
     return SwitchListTile(
-      value: _filters[filter]!,
-      onChanged: (isChecked) => setState(() => _filters[filter] = isChecked),
+      value: activeFilters[filter]!,
+      onChanged: (isChecked) {
+        ref.read(filtersProvider.notifier).setFilter(filter, isChecked);
+      },
       title: Text(
         title,
         style: theme.textTheme.titleLarge!.copyWith(
@@ -50,37 +38,30 @@ class _FiltersScreenState extends State<FiltersScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeFilters = ref.watch(filtersProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Filters'),
         actions: [
           TextButton(
-            onPressed: () => setState(() {
-              _filters = {...kInitialFilters};
-            }),
+            onPressed: () => ref.read(filtersProvider.notifier).reset(),
             child: const Text('Reset'),
           ),
         ],
       ),
-      // Returns the chosen filters to whoever opened this screen.
-      body: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          Navigator.of(context).pop(_filters);
-        },
-        child: Column(
-          children: [
-            _switch(Filter.glutenFree, 'Gluten-free',
-                'Only include gluten-free meals.'),
-            _switch(Filter.lactoseFree, 'Lactose-free',
-                'Only include lactose-free meals.'),
-            _switch(Filter.vegetarian, 'Vegetarian',
-                'Only include vegetarian meals.'),
-            _switch(Filter.vegan, 'Vegan', 'Only include vegan meals.'),
-          ],
-        ),
+      body: Column(
+        children: [
+          _switch(context, ref, activeFilters, Filter.glutenFree,
+              'Gluten-free', 'Only include gluten-free meals.'),
+          _switch(context, ref, activeFilters, Filter.lactoseFree,
+              'Lactose-free', 'Only include lactose-free meals.'),
+          _switch(context, ref, activeFilters, Filter.vegetarian,
+              'Vegetarian', 'Only include vegetarian meals.'),
+          _switch(context, ref, activeFilters, Filter.vegan, 'Vegan',
+              'Only include vegan meals.'),
+        ],
       ),
     );
   }
