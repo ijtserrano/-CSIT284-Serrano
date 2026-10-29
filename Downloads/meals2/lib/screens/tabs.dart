@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:meals2/models/meal.dart';
 import 'package:meals2/providers/favorite_meals_provider.dart';
 import 'package:meals2/providers/meals_provider.dart';
+import 'package:meals2/screens/about.dart';
 import 'package:meals2/screens/categories.dart';
 import 'package:meals2/screens/filters.dart';
 import 'package:meals2/screens/meals.dart';
+import 'package:meals2/screens/quiz_category.dart';
+import 'package:meals2/screens/search.dart';
+import 'package:meals2/screens/settings.dart';
+import 'package:meals2/screens/statistics.dart';
 import 'package:meals2/widgets/main_drawer.dart';
 
 const kInitialFilters = {
@@ -28,35 +34,9 @@ class _TabsScreenState extends ConsumerState<TabsScreen> {
   int _selectedPageIndex = 0;
   Map<Filter, bool> _selectedFilters = kInitialFilters;
 
-  void _selectPage(int index) {
-    setState(() {
-      _selectedPageIndex = index;
-    });
-  }
-
-  void _setScreen(String identifier) async {
-    Navigator.of(context).pop();
-    if (identifier == 'filters') {
-      final result = await Navigator.of(context).push<Map<Filter, bool>>(
-        MaterialPageRoute(
-          builder: (ctx) => FiltersScreen(
-            currentFilters: _selectedFilters,
-          ),
-        ),
-      );
-
-      setState(() {
-        _selectedFilters = result ?? kInitialFilters;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final meals = ref.watch(mealsProvider);
-    final favoriteMeals = ref.watch(favoriteMealsProvider);
-
-    final availableMeals = meals.where((meal) {
+  List<Meal> _availableMeals() {
+    final meals = ref.read(mealsProvider);
+    return meals.where((meal) {
       if (_selectedFilters[Filter.glutenFree]! && !meal.isGlutenFree) {
         return false;
       }
@@ -71,8 +51,78 @@ class _TabsScreenState extends ConsumerState<TabsScreen> {
       }
       return true;
     }).toList();
+  }
 
-    Widget activePage = CategoriesScreen(availableMeals: availableMeals);
+  void _selectPage(int index) {
+    setState(() {
+      _selectedPageIndex = index;
+    });
+  }
+
+  Future<void> _setScreen(String identifier) async {
+    Navigator.of(context).pop(); // close the drawer
+
+    switch (identifier) {
+      case 'meals':
+        setState(() {
+          _selectedPageIndex = 0;
+        });
+        break;
+
+      case 'filters':
+        final result = await Navigator.of(context).push<Map<Filter, bool>>(
+          MaterialPageRoute(
+            builder: (ctx) => FiltersScreen(
+              currentFilters: _selectedFilters,
+            ),
+          ),
+        );
+        if (!mounted) return;
+        setState(() {
+          _selectedFilters = result ?? kInitialFilters;
+        });
+        break;
+
+      case 'search':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (ctx) => SearchScreen(availableMeals: _availableMeals()),
+          ),
+        );
+        break;
+
+      case 'quiz':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (ctx) => const QuizCategoryScreen()),
+        );
+        break;
+
+      case 'statistics':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (ctx) => const StatisticsScreen()),
+        );
+        break;
+
+      case 'settings':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (ctx) => const SettingsScreen()),
+        );
+        break;
+
+      case 'about':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (ctx) => const AboutScreen()),
+        );
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final favoriteMeals = ref.watch(favoriteMealsProvider);
+    ref.watch(mealsProvider); // rebuild if the meals list ever changes
+
+    Widget activePage = CategoriesScreen(availableMeals: _availableMeals());
     var activePageTitle = 'Categories';
 
     if (_selectedPageIndex == 1) {

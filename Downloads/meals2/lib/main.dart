@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:meals2/screens/tabs.dart';
 
-// If you had your own colors/fonts before, put them back in these two themes.
+
 final theme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
@@ -25,7 +25,7 @@ final darkTheme = ThemeData(
   ),
 );
 
-// Used by settings.dart to switch between light / dark / system.
+
 final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.system);
 
 void main() {
